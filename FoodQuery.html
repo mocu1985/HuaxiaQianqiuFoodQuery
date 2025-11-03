@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>華夏千秋食譜查詢系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 2px solid #e9ecef;
+            padding: 20px;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            padding: 10px 0;
+            z-index: 10;
+        }
+
+        .ingredient-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ingredient-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .ingredient-item:hover {
+            background: #f0f0ff;
+            border-color: #667eea;
+        }
+
+        .ingredient-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .ingredient-item label {
+            cursor: pointer;
+            flex: 1;
+            user-select: none;
+        }
+
+        .ingredient-count {
+            font-size: 0.85em;
+            color: #999;
+            margin-left: 5px;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .selected-ingredients {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            min-height: 60px;
+        }
+
+        .selected-ingredients h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .ingredient-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .ingredient-tag .remove {
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .ingredient-tag .remove:hover {
+            opacity: 1;
+        }
+
+        .empty-selection {
+            color: #999;
+            font-style: italic;
+            padding: 5px 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 120px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card .number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .category-tab {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .category-tab:hover, .category-tab.active {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .results-section {
+            padding: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-header h2 {
+            color: #333;
+            font-size: 1.6em;
+        }
+
+        .result-count {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .recipe-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 18px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .recipe-category {
+            display: inline-block;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .recipe-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .recipe-ingredients {
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.9em;
+        }
+
+        .recipe-ingredients strong {
+            color: #667eea;
+        }
+
+        .ingredient-match {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            grid-column: 1 / -1;
+        }
+
+        .no-results-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .no-results h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                max-height: 400px;
+                border-right: none;
+                border-bottom: 2px solid #e9ecef;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .recipe-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍜 華夏千秋食譜查詢系統</h1>
+            <p>勾選食材,查找可製作的食譜</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 左側食材選擇區 -->
+            <div class="sidebar">
+                <h3>📦 食材清單 (<span id="totalIngredients">0</span>)</h3>
+                <div class="ingredient-list" id="ingredientList"></div>
+            </div>
+
+            <!-- 右側內容區 -->
+            <div>
+                <div class="search-section">
+                    <div class="selected-ingredients">
+                        <h4>已選擇的食材:</h4>
+                        <div class="selected-tags" id="selectedTags">
+                            <span class="empty-selection">尚未選擇任何食材</span>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="filterRecipes()">🔍 查詢食譜</button>
+                        <button class="btn btn-secondary" onclick="clearSelection()">✖ 清除全部</button>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="number" id="totalRecipes">261</div>
+                            <div class="label">總配方數</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number" id="selectedCount">0</div>
+                            <div class="label">已選食材</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number" id="matchCount">-</div>
+                            <div class="label">符合食譜</div>
+                        </div>
+                    </div>
+
+                    <div class="category-tabs">
+                        <div class="category-tab active" data-category="all" onclick="filterByCategory('all')">全部</div>
+                        <div class="category-tab" data-category="素菜" onclick="filterByCategory('素菜')">素菜</div>
+                        <div class="category-tab" data-category="肉菜" onclick="filterByCategory('肉菜')">肉菜</div>
+                        <div class="category-tab" data-category="甜品" onclick="filterByCategory('甜品')">甜品</div>
+                        <div class="category-tab" data-category="酒類" onclick="filterByCategory('酒類')">酒類</div>
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <div class="results-header">
+                        <h2>配方列表</h2>
+                        <span class="result-count" id="resultCount">顯示全部配方</span>
+                    </div>
+                    <div class="recipe-grid" id="recipeGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 食譜數據
+        const recipes = {
+            "素菜": [
+                {"name": "文思豆腐", "ingredients": ["黃豆"]},
+                {"name": "撒子", "ingredients": ["麥子"]},
+                {"name": "水煮菠菜", "ingredients": ["菠菜"]},
+                {"name": "素炒白菜", "ingredients": ["白菜"]},
+                {"name": "白菜燉豆腐", "ingredients": ["黃豆", "白菜"]},
+                {"name": "雞蛋麵", "ingredients": ["雞蛋", "麥子"]},
+                {"name": "蛋炒飯", "ingredients": ["雞蛋", "大米"]},
+                {"name": "客家釀豆腐", "ingredients": ["黃豆", "豬肉"]},
+                {"name": "熱乾麵", "ingredients": ["麥子", "醬油"]},
+                {"name": "開水白菜", "ingredients": ["白菜", "雞肉"]},
+                {"name": "陽春麵", "ingredients": ["麥子", "菠菜"]},
+                {"name": "黃豆炒菠菜", "ingredients": ["黃豆", "菠菜"]},
+                {"name": "白菜粥", "ingredients": ["白菜", "大米"]},
+                {"name": "徽州毛豆腐", "ingredients": ["黃豆", "醬油"]},
+                {"name": "彗星炒飯", "ingredients": ["大米", "雞蛋", "菠菜"]},
+                {"name": "珍珠翡翠白玉湯", "ingredients": ["黃豆", "大米", "菠菜"]},
+                {"name": "香蔥土豆", "ingredients": ["香蔥", "土豆"]},
+                {"name": "燒餅豆腐腦", "ingredients": ["麥子", "黃豆", "醬油"]},
+                {"name": "白蒲茶乾", "ingredients": ["黃豆", "醬油", "滷水"]},
+                {"name": "酸辣土豆絲", "ingredients": ["土豆", "醋", "辣椒"]},
+                {"name": "苦瓜炒蛋", "ingredients": ["苦瓜", "雞蛋"]},
+                {"name": "麻婆豆腐", "ingredients": ["黃豆", "辣椒"]},
+                {"name": "素炒鱔絲", "ingredients": ["蘑菇", "筍"]},
+                {"name": "羅漢齋", "ingredients": ["豌豆", "蘑菇"]},
+                {"name": "三色銀鉤", "ingredients": ["蘑菇", "筍", "菠菜"]},
+                {"name": "苦瓜燜黃豆", "ingredients": ["黃豆", "苦瓜"]},
+                {"name": "方便麵", "ingredients": ["麥子", "菠菜", "辣椒"]},
+                {"name": "宮廷南瓜", "ingredients": ["大米", "糖", "南瓜"]},
+                {"name": "泡菜", "ingredients": ["辣椒", "白菜"]},
+                {"name": "豌豆餅", "ingredients": ["豌豆", "麥子"]},
+                {"name": "金麥釀苦瓜", "ingredients": ["麥子", "苦瓜"]},
+                {"name": "南波丸", "ingredients": ["麥子", "菠菜", "南瓜"]},
+                {"name": "香酥辣菇", "ingredients": ["辣椒", "蘑菇", "麥子"]},
+                {"name": "涼瓜蘑菇湯", "ingredients": ["苦瓜", "蘑菇"]},
+                {"name": "牛肝菌豆腐羹", "ingredients": ["牛肝菌", "黃豆"]},
+                {"name": "牛肝菌麥片粥", "ingredients": ["牛肝菌", "麥子", "大米"]},
+                {"name": "涼拌金瓜絲", "ingredients": ["蔥", "南瓜"]},
+                {"name": "甜酒釀", "ingredients": ["糖", "酒麴", "桂花"]},
+                {"name": "北鄉湯圓", "ingredients": ["黃豆", "大米", "筍"]},
+                {"name": "石涼粉", "ingredients": ["蜜糖", "豌豆"]},
+                {"name": "松茸黃豆煲", "ingredients": ["松茸", "黃豆"]},
+                {"name": "榴槤豆漿", "ingredients": ["黃豆", "榴槤"]},
+                {"name": "燕窩米粉", "ingredients": ["大米", "燕窩"]},
+                {"name": "燕窩包子", "ingredients": ["麥子", "燕窩"]},
+                {"name": "燕窩豆漿", "ingredients": ["黃豆", "燕窩"]}
+            ],
+            "肉菜": [
+                {"name": "烤雞", "ingredients": ["雞肉"]},
+                {"name": "清蒸魚肉", "ingredients": ["魚肉"]},
+                {"name": "炸豬排", "ingredients": ["豬肉"]},
+                {"name": "熟牛肉", "ingredients": ["牛肉"]},
+                {"name": "烤全羊", "ingredients": ["羊肉"]},
+                {"name": "手撕烤兔", "ingredients": ["兔肉"]},
+                {"name": "烤鵝", "ingredients": ["鵝肉"]},
+                {"name": "海鮮飯", "ingredients": ["大米", "蝦肉"]},
+                {"name": "西湖醋魚", "ingredients": ["魚肉", "醋"]},
+                {"name": "杭州醬鴨", "ingredients": ["鴨肉", "醬油"]},
+                {"name": "蛋肉腸粉", "ingredients": ["豬肉", "麥子", "雞蛋"]},
+                {"name": "水餃童雞", "ingredients": ["雞肉", "豬肉", "麥子"]},
+                {"name": "黃豆燒魚肉", "ingredients": ["魚肉", "黃豆"]},
+                {"name": "土豆燉牛肉", "ingredients": ["土豆", "牛肉"]},
+                {"name": "黯然銷魂飯", "ingredients": ["豬肉", "大米", "雞蛋"]},
+                {"name": "霸王別姬", "ingredients": ["雞肉", "甲魚肉"]},
+                {"name": "地鍋雞", "ingredients": ["麥子", "雞肉"]},
+                {"name": "九轉大腸", "ingredients": ["豬肉", "醬油"]},
+                {"name": "蝦仁豬心湯", "ingredients": ["蝦肉", "豬肉"]},
+                {"name": "蔥爆牛肉", "ingredients": ["蔥", "牛肉"]},
+                {"name": "乾鍋土豆蝦", "ingredients": ["土豆", "蝦肉"]},
+                {"name": "牛肉滑蛋飯", "ingredients": ["牛肉", "大米", "雞蛋"]},
+                {"name": "神仙魚", "ingredients": ["雞肉", "魚肉"]},
+                {"name": "狀元麵", "ingredients": ["豬肉", "麥子"]},
+                {"name": "竹葉牛肉粽", "ingredients": ["大米", "牛肉", "竹子"]},
+                {"name": "竹葉蝦仁", "ingredients": ["蝦肉", "竹葉"]},
+                {"name": "竹葉蒸子排", "ingredients": ["竹葉", "豬肉"]},
+                {"name": "魚肉牛尾湯", "ingredients": ["魚肉", "牛肉"]},
+                {"name": "羊肉泡饃", "ingredients": ["羊肉", "麥子"]},
+                {"name": "魚羊鮮", "ingredients": ["魚肉", "羊肉"]},
+                {"name": "黃豆燜甲魚", "ingredients": ["黃豆", "甲魚"]},
+                {"name": "醬燒魚", "ingredients": ["醬油", "魚肉"]},
+                {"name": "冰糖兔丁", "ingredients": ["白糖", "兔肉"]},
+                {"name": "土豆燜鵝", "ingredients": ["土豆", "鵝"]},
+                {"name": "鹽水鴨", "ingredients": ["鴨子", "蔥"]},
+                {"name": "龜峰扣肉", "ingredients": ["豬肉", "豬肉", "滷水"]},
+                {"name": "冰糖甲魚", "ingredients": ["白糖", "甲魚"]},
+                {"name": "三頭一掌", "ingredients": ["魚肉", "鴨肉", "兔肉"]},
+                {"name": "田魚撈飯", "ingredients": ["魚肉", "大米"]},
+                {"name": "滷鴨", "ingredients": ["鴨肉", "滷水"]},
+                {"name": "滷鵝", "ingredients": ["鵝肉", "滷水"]},
+                {"name": "鯉魚焙麵", "ingredients": ["麥子", "魚肉"]},
+                {"name": "東台魚湯麵", "ingredients": ["魚肉", "豬肉", "麥子"]},
+                {"name": "秦南水牛肉", "ingredients": ["牛肉", "白菜"]},
+                {"name": "南湖對蝦", "ingredients": ["雞蛋", "蝦肉"]},
+                {"name": "八仙踏青", "ingredients": ["魚肉", "白菜"]},
+                {"name": "雲吞麵", "ingredients": ["麥子", "豬肉", "蔥"]},
+                {"name": "北京烤鴨", "ingredients": ["小麥", "鴨子", "蔥"]},
+                {"name": "糖醋里脊", "ingredients": ["豬肉", "糖", "醋"]},
+                {"name": "東坡肉", "ingredients": ["豬肉", "糖", "醬油"]},
+                {"name": "蟹黃鮮菇", "ingredients": ["蘑菇", "蟹肉"]},
+                {"name": "蟹肉煲", "ingredients": ["蟹肉"]},
+                {"name": "蝦兵蟹將", "ingredients": ["蝦肉", "蟹肉"]},
+                {"name": "紅燒蝦肉", "ingredients": ["蝦肉", "糖", "醬油"]},
+                {"name": "糖醋魚", "ingredients": ["魚肉", "糖", "醋"]},
+                {"name": "蟹黃豆腐", "ingredients": ["黃豆", "蟹肉"]},
+                {"name": "苗家酸湯蟹", "ingredients": ["醋", "蟹肉"]},
+                {"name": "紅燒田魚", "ingredients": ["魚肉", "糖", "醬油"]},
+                {"name": "紅燒兔丁", "ingredients": ["糖", "醬油", "兔肉"]},
+                {"name": "龍井蝦仁", "ingredients": ["蔥", "蝦仁", "雞蛋"]},
+                {"name": "鴨血粉絲湯", "ingredients": ["黃豆", "鴨肉", "醬油"]},
+                {"name": "松鼠鱖魚", "ingredients": ["魚肉", "糖", "蘑菇"]},
+                {"name": "清蒸荷包紅鯉魚", "ingredients": ["魚肉", "蘑菇"]},
+                {"name": "燈盞粿", "ingredients": ["豬肉", "大米", "菠菜"]},
+                {"name": "餃子粑", "ingredients": ["豬肉", "大米", "白菜"]},
+                {"name": "荷葉粉蒸肉", "ingredients": ["豬肉", "大米", "醬油"]},
+                {"name": "羹龍戲珠", "ingredients": ["魚肉", "土豆", "醬油"]},
+                {"name": "豆腐蛤蜊湯", "ingredients": ["魚肉", "黃豆", "蔥"]},
+                {"name": "一蓑煙雨", "ingredients": ["魚肉", "蘑菇", "竹葉"]},
+                {"name": "蟹汁鱖魚", "ingredients": ["魚肉", "雞蛋", "蟹黃"]},
+                {"name": "羊肉炕饃", "ingredients": ["羊肉", "麥子", "醬油"]},
+                {"name": "雞血湯", "ingredients": ["雞肉", "雞蛋", "菠菜"]},
+                {"name": "紅燒獅子頭", "ingredients": ["豬肉", "麥子", "蘑菇"]},
+                {"name": "八寶鵲", "ingredients": ["雞肉", "蘑菇", "滷水"]},
+                {"name": "淮王魚羹", "ingredients": ["魚肉", "蔥", "白菜"]},
+                {"name": "苦瓜釀肉", "ingredients": ["苦瓜", "豬肉"]},
+                {"name": "蜜汁叉燒", "ingredients": ["蜜糖", "豬肉"]},
+                {"name": "魚香肉絲", "ingredients": ["辣椒", "土豆", "豬肉"]},
+                {"name": "香辣蝦", "ingredients": ["辣椒", "蝦肉"]},
+                {"name": "香辣牛肉麵", "ingredients": ["辣椒", "牛肉", "麥子"]},
+                {"name": "蓮花血鴨", "ingredients": ["辣椒", "鴨肉"]},
+                {"name": "酸筍燜鴨", "ingredients": ["筍", "醋", "鴨肉"]},
+                {"name": "筍絲炒肉", "ingredients": ["筍", "豬肉"]},
+                {"name": "大盤雞", "ingredients": ["辣椒", "雞肉", "土豆"]},
+                {"name": "辣子魚肉塊", "ingredients": ["魚肉", "辣椒"]},
+                {"name": "豌豆炒牛肉", "ingredients": ["豌豆", "牛肉"]},
+                {"name": "鮮蝦豌豆羹", "ingredients": ["豌豆", "蝦肉"]},
+                {"name": "豌豆燉羊肉", "ingredients": ["豌豆", "羊肉"]},
+                {"name": "豌豆豬肉包", "ingredients": ["豌豆", "豬肉", "麥子"]},
+                {"name": "豌豆雞肉湯", "ingredients": ["豌豆", "雞肉"]},
+                {"name": "南瓜雞肉煲", "ingredients": ["南瓜", "雞肉"]},
+                {"name": "香煎南瓜牛排", "ingredients": ["南瓜", "牛肉"]},
+                {"name": "南瓜炒魚肉", "ingredients": ["南瓜", "魚肉"]},
+                {"name": "南瓜豬肉粥", "ingredients": ["南瓜", "豬肉", "大米"]},
+                {"name": "南瓜羊肉湯", "ingredients": ["南瓜", "羊肉"]},
+                {"name": "桃花雞肉卷", "ingredients": ["桃花", "雞肉", "麥子"]},
+                {"name": "桃花魚", "ingredients": ["魚肉", "桃花"]},
+                {"name": "葡萄烤鴨", "ingredients": ["葡萄", "鴨肉"]},
+                {"name": "葡萄咕嚕肉", "ingredients": ["葡萄", "豬肉"]},
+                {"name": "葡萄乾羊肉抓飯", "ingredients": ["葡萄", "羊肉", "大米"]},
+                {"name": "牛肝菌手撕雞", "ingredients": ["牛肝菌", "雞肉"]},
+                {"name": "牛肝菌燒牛肉", "ingredients": ["牛肝菌", "牛肉"]},
+                {"name": "牛肝菌魚肉湯", "ingredients": ["牛肝菌", "魚肉"]},
+                {"name": "麻辣兔頭", "ingredients": ["兔肉", "辣椒"]},
+                {"name": "桃花兔湯", "ingredients": ["桃花", "兔肉"]},
+                {"name": "脆皮燒鵝", "ingredients": ["鵝肉", "蜜糖"]},
+                {"name": "醃篤鮮", "ingredients": ["豬肉", "蔥", "筍"]},
+                {"name": "瓷泥煨雞", "ingredients": ["雞肉", "豬肉", "辣椒"]},
+                {"name": "雪萊大湯黃魚", "ingredients": ["魚肉", "筍"]},
+                {"name": "臭鱖魚", "ingredients": ["魚肉", "辣椒", "滷水"]},
+                {"name": "一品鍋", "ingredients": ["豬肉", "蘑菇", "筍"]},
+                {"name": "麵炕雞", "ingredients": ["麥子", "雞肉", "辣椒"]},
+                {"name": "臨沂炒雞", "ingredients": ["雞肉", "辣椒", "蔥"]},
+                {"name": "春風蒸餃", "ingredients": ["桃花", "魚肉", "麥子"]},
+                {"name": "躍龍門", "ingredients": ["魚肉", "豌豆"]},
+                {"name": "鮮村蒸魚乾", "ingredients": ["魚肉", "醬油", "辣椒"]},
+                {"name": "八寶豆腐", "ingredients": ["黃豆", "雞蛋", "海參"]},
+                {"name": "火腿神仙鴨", "ingredients": ["鴨肉", "金華火腿"]},
+                {"name": "群鮮羹", "ingredients": ["雞肉", "蝦肉", "金華火腿"]},
+                {"name": "仰望星空", "ingredients": ["優質魚肉", "麥子"]},
+                {"name": "鮮魚豆腐湯", "ingredients": ["黃豆", "優質魚肉"]},
+                {"name": "鮑魚羊腩煲", "ingredients": ["鮑魚", "羊肉"]},
+                {"name": "天香鮑魚", "ingredients": ["鮑魚", "糖"]},
+                {"name": "鮑魚燒雞", "ingredients": ["鮑魚", "雞肉"]},
+                {"name": "鮑汁蒸魚肉", "ingredients": ["鮑魚", "魚肉"]},
+                {"name": "醬爆鮑魚", "ingredients": ["醬油", "鮑魚"]},
+                {"name": "竹葉蒸鮑魚", "ingredients": ["鮑魚", "竹葉"]},
+                {"name": "鮑片牛肉粥", "ingredients": ["鮑魚", "牛肉", "大米"]},
+                {"name": "松茸燉鴨", "ingredients": ["松茸", "鴨肉"]},
+                {"name": "松茸牛柳條", "ingredients": ["松茸", "牛肉"]},
+                {"name": "松茸蒸甲魚肉", "ingredients": ["松茸", "甲魚肉"]},
+                {"name": "松茸高級魚肉湯", "ingredients": ["松茸", "優質魚肉"]},
+                {"name": "榴槤焗蝦", "ingredients": ["榴槤", "蝦"]},
+                {"name": "肉芋頭燒雞", "ingredients": ["芋頭", "雞肉"]},
+                {"name": "荔浦芋頭扣肉", "ingredients": ["芋頭", "豬肉"]},
+                {"name": "燕窩甲魚肉湯", "ingredients": ["甲魚肉", "燕窩"]},
+                {"name": "魚翅撈飯", "ingredients": ["大米", "魚翅"]},
+                {"name": "魚翅麵", "ingredients": ["麥子", "魚翅"]},
+                {"name": "清蒸乾絲魚翅", "ingredients": ["魚翅", "黃豆"]},
+                {"name": "紅燒魚翅", "ingredients": ["魚翅", "醬油", "糖"]},
+                {"name": "海參燉兔", "ingredients": ["海參", "兔肉"]},
+                {"name": "北菇鵝掌火腿", "ingredients": ["鵝肉", "蘑菇", "金華火腿"]},
+                {"name": "生魚燴", "ingredients": ["蔥", "優質魚肉", "醋"]},
+                {"name": "龍抬頭", "ingredients": ["優質魚肉", "滷水"]},
+                {"name": "宋嫂魚羹", "ingredients": ["筍", "魚肉", "金華火腿"]},
+                {"name": "套四寶", "ingredients": ["海參", "蘑菇", "雞肉"]},
+                {"name": "揚州炒飯", "ingredients": ["大米", "雞蛋", "金華火腿"]},
+                {"name": "四喜丸子", "ingredients": ["蝦肉", "海參", "蟹肉"]},
+                {"name": "蔥燒海參", "ingredients": ["蔥", "醬油", "海參"]}
+            ],
+            "甜品": [
+                {"name": "米糕", "ingredients": ["大米"]},
+                {"name": "煎蛋", "ingredients": ["雞蛋"]},
+                {"name": "千層糕", "ingredients": ["麥子", "糖"]},
+                {"name": "肉夾饃", "ingredients": ["豬肉", "麥子", "滷水"]},
+                {"name": "蔥包檜兒", "ingredients": ["麥子", "蔥"]},
+                {"name": "炸響鈴", "ingredients": ["豬肉", "黃豆", "雞蛋"]},
+                {"name": "鹹豆腐腦", "ingredients": ["黃豆", "滷水"]},
+                {"name": "甜豆腐腦", "ingredients": ["黃豆", "糖"]},
+                {"name": "蝦餃", "ingredients": ["麥子", "蝦肉"]},
+                {"name": "驢打滾", "ingredients": ["大米", "黃豆"]},
+                {"name": "黃金開口笑", "ingredients": ["麥子", "牛肉"]},
+                {"name": "鹼水粑", "ingredients": ["大米", "大米", "竹葉"]},
+                {"name": "紅楓糕", "ingredients": ["大米", "蝦肉", "雞蛋"]},
+                {"name": "閒人燒餅", "ingredients": ["蝦肉", "魚肉", "麥子"]},
+                {"name": "蛋黃酥", "ingredients": ["麥子", "糖", "雞蛋"]},
+                {"name": "臭豆腐", "ingredients": ["黃豆", "滷水", "酒麴"]},
+                {"name": "黃山燒餅", "ingredients": ["豬肉", "麥子", "糖"]},
+                {"name": "蟹黃小籠包", "ingredients": ["豬肉", "麥子", "蟹黃"]},
+                {"name": "蘑菇白菜包", "ingredients": ["麥子", "蘑菇", "白菜"]},
+                {"name": "竹葉糕", "ingredients": ["竹葉", "大米", "糖"]},
+                {"name": "黃金比例燒賣", "ingredients": ["豬肉", "菠菜", "麥子"]},
+                {"name": "劍心餅", "ingredients": ["大米", "土豆", "糖"]},
+                {"name": "大俠餅", "ingredients": ["麥子", "蔥", "蝦肉"]},
+                {"name": "開封灌湯包", "ingredients": ["豬肉", "麥子", "醬油"]},
+                {"name": "鹽城雞蛋餅", "ingredients": ["麥子", "蔥", "雞蛋"]},
+                {"name": "挽弓燒餅", "ingredients": ["雞肉", "麥子", "蘑菇"]},
+                {"name": "苦瓜酥", "ingredients": ["麥子", "苦瓜"]},
+                {"name": "桃花元宵", "ingredients": ["桃花", "麥子", "糖"]},
+                {"name": "豌豆黃兒", "ingredients": ["豌豆", "糖"]},
+                {"name": "龍鬚酥", "ingredients": ["蜜糖"]},
+                {"name": "羊角蜜", "ingredients": ["蜜糖", "麥子"]},
+                {"name": "蜜汁蘑菇", "ingredients": ["蜜糖", "蘑菇"]},
+                {"name": "拔絲苦瓜", "ingredients": ["糖", "苦瓜"]},
+                {"name": "南瓜酥", "ingredients": ["麥子", "糖", "南瓜"]},
+                {"name": "竹葉黃粑", "ingredients": ["竹葉", "大米", "蜜糖"]},
+                {"name": "傣味火燒乾巴", "ingredients": ["牛肉", "辣椒"]},
+                {"name": "葡萄乾米糕", "ingredients": ["大米", "葡萄"]},
+                {"name": "桂花米糕", "ingredients": ["大米", "桂花"]},
+                {"name": "桂花餅", "ingredients": ["麥子", "桂花"]},
+                {"name": "桂花豆漿", "ingredients": ["桂花", "黃豆"]},
+                {"name": "桂花糖", "ingredients": ["桂花", "糖"]},
+                {"name": "崇明糕", "ingredients": ["大米", "糖", "葡萄"]},
+                {"name": "廣寒宮", "ingredients": ["竹葉", "桂花", "兔肉"]},
+                {"name": "荷花酥", "ingredients": ["麥子", "蜜糖", "雞蛋"]},
+                {"name": "西亭脆餅", "ingredients": ["麥子", "白糖", "蜜糖"]},
+                {"name": "鮑魚酥", "ingredients": ["麥子", "白糖", "鮑魚"]},
+                {"name": "榴槤糯米糕", "ingredients": ["大米", "榴槤"]},
+                {"name": "榴槤飛餅", "ingredients": ["麥子", "榴槤"]},
+                {"name": "榴槤酥", "ingredients": ["麥子", "白糖", "榴槤"]},
+                {"name": "榴槤八寶飯", "ingredients": ["大米", "白糖", "榴槤"]},
+                {"name": "荔浦芋頭米糕", "ingredients": ["大米", "芋頭"]},
+                {"name": "香芋豆漿", "ingredients": ["芋頭", "黃豆"]},
+                {"name": "芋頭餅", "ingredients": ["芋頭", "麥子"]},
+                {"name": "冰糖燕窩", "ingredients": ["糖", "燕窩"]}
+            ],
+            "酒類": [
+                {"name": "葡萄酒", "ingredients": ["葡萄", "酒麴"]},
+                {"name": "口子窖", "ingredients": ["桃花", "酒麴"]},
+                {"name": "明綠御酒", "ingredients": ["豌豆", "酒麴"]},
+                {"name": "小麥酒", "ingredients": ["麥子", "酒麴"]},
+                {"name": "老春酒", "ingredients": ["大米", "酒麴"]},
+                {"name": "蘭陵酒", "ingredients": ["黃豆", "酒麴"]},
+                {"name": "美人酒", "ingredients": ["雞蛋", "酒麴"]},
+                {"name": "竹葉青", "ingredients": ["竹葉", "高粱", "酒麴"]},
+                {"name": "杜康酒", "ingredients": ["麥子", "高粱", "酒麴"]},
+                {"name": "狀元酒", "ingredients": ["大米", "高粱", "酒麴"]},
+                {"name": "女兒紅", "ingredients": ["麥子", "高粱", "酒麴"]},
+                {"name": "桑落酒", "ingredients": ["豌豆", "高粱", "酒麴"]},
+                {"name": "西鳳酒", "ingredients": ["麥子", "豌豆", "酒麴"]}
+            ]
+        };
+
+        let allRecipes = [];
+        let allIngredients = new Map(); // Map<食材名, 出現次數>
+        let selectedIngredients = new Set();
+        let currentCategory = 'all';
+
+        // 初始化
+        function init() {
+            // 扁平化所有配方並統計食材
+            for (const [category, recipeList] of Object.entries(recipes)) {
+                recipeList.forEach((recipe, index) => {
+                    allRecipes.push({
+                        ...recipe,
+                        category: category,
+                        number: index + 1
+                    });
+
+                    // 統計每個食材出現的次數
+                    recipe.ingredients.forEach(ing => {
+                        allIngredients.set(ing, (allIngredients.get(ing) || 0) + 1);
+                    });
+                });
+            }
+
+            // 渲染食材列表
+            renderIngredientList();
+
+            // 顯示所有配方
+            displayRecipes(allRecipes);
+
+            // 更新統計
+            document.getElementById('totalIngredients').textContent = allIngredients.size;
+        }
+
+        // 渲染食材列表
+        function renderIngredientList() {
+            const ingredientList = document.getElementById('ingredientList');
+
+            // 將食材按出現次數排序
+            const sortedIngredients = Array.from(allIngredients.entries())
+                .sort((a, b) => b[1] - a[1]);
+
+            ingredientList.innerHTML = sortedIngredients.map(([ing, count]) => `
+                <div class="ingredient-item" onclick="toggleIngredient('${ing}')">
+                    <input type="checkbox" id="ing_${ing}" onchange="toggleIngredient('${ing}')">
+                    <label for="ing_${ing}">${ing}</label>
+                    <span class="ingredient-count">(${count})</span>
+                </div>
+            `).join('');
+        }
+
+        // 切換食材選擇
+        function toggleIngredient(ingredient) {
+            const checkbox = document.getElementById(`ing_${ingredient}`);
+
+            if (selectedIngredients.has(ingredient)) {
+                selectedIngredients.delete(ingredient);
+                checkbox.checked = false;
+            } else {
+                selectedIngredients.add(ingredient);
+                checkbox.checked = true;
+            }
+
+            updateSelectedTags();
+            updateStats();
+        }
+
+        // 更新已選擇的食材標籤
+        function updateSelectedTags() {
+            const tagsContainer = document.getElementById('selectedTags');
+
+            if (selectedIngredients.size === 0) {
+                tagsContainer.innerHTML = '<span class="empty-selection">尚未選擇任何食材</span>';
+                return;
+            }
+
+            tagsContainer.innerHTML = Array.from(selectedIngredients).map(ing => `
+                <div class="ingredient-tag">
+                    ${ing}
+                    <span class="remove" onclick="removeIngredient('${ing}')">✕</span>
+                </div>
+            `).join('');
+        }
+
+        // 移除單個食材
+        function removeIngredient(ingredient) {
+            selectedIngredients.delete(ingredient);
+            document.getElementById(`ing_${ingredient}`).checked = false;
+            updateSelectedTags();
+            updateStats();
+        }
+
+        // 更新統計數據
+        function updateStats() {
+            document.getElementById('selectedCount').textContent = selectedIngredients.size;
+        }
+
+        // 過濾食譜
+        function filterRecipes() {
+            let filtered = allRecipes;
+
+            // 分類篩選
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(r => r.category === currentCategory);
+            }
+
+            // 根據已選食材篩選 - 只顯示所有材料都已勾選的食譜
+            if (selectedIngredients.size > 0) {
+                filtered = filtered.filter(recipe => {
+                    // 檢查食譜的所有材料是否都在已選擇的食材中
+                    return recipe.ingredients.every(ing => selectedIngredients.has(ing));
+                });
+            }
+
+            displayRecipes(filtered);
+            document.getElementById('matchCount').textContent = filtered.length;
+        }
+
+        // 分類篩選
+        function filterByCategory(category) {
+            currentCategory = category;
+
+            // 更新標籤樣式
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+
+            filterRecipes();
+        }
+
+        // 清除全部選擇
+        function clearSelection() {
+            selectedIngredients.clear();
+
+            // 取消所有複選框
+            document.querySelectorAll('.ingredient-item input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+
+            updateSelectedTags();
+            updateStats();
+
+            currentCategory = 'all';
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector('[data-category="all"]').classList.add('active');
+
+            displayRecipes(allRecipes);
+            document.getElementById('matchCount').textContent = '-';
+        }
+
+        // 顯示配方
+        function displayRecipes(recipesToDisplay) {
+            const grid = document.getElementById('recipeGrid');
+            const resultCount = document.getElementById('resultCount');
+
+            if (recipesToDisplay.length === 0) {
+                grid.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">😢</div>
+                        <h3>找不到符合條件的配方</h3>
+                        <p>請嘗試選擇其他食材組合</p>
+                    </div>
+                `;
+                resultCount.textContent = '無符合食譜';
+                return;
+            }
+
+            resultCount.textContent = `顯示 ${recipesToDisplay.length} 個配方`;
+
+            grid.innerHTML = recipesToDisplay.map(recipe => {
+                let ingredientsText = recipe.ingredients.map(ing => {
+                    // 高亮已選擇的食材
+                    if (selectedIngredients.has(ing)) {
+                        return `<span class="ingredient-match">${ing}</span>`;
+                    }
+                    return ing;
+                }).join(' + ');
+
+                return `
+                    <div class="recipe-card">
+                        <span class="recipe-category">${recipe.category}</span>
+                        <div class="recipe-name">${recipe.name}</div>
+                        <div class="recipe-ingredients">
+                            <strong>材料:</strong> ${ingredientsText}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
